@@ -27,7 +27,7 @@ export async function login(email, password) {
 //temporary use of adminLogin endpoint with dummy password to check if email belongs to an admin user
 export const checkAdminEmail = asyncHandler(async (email) => {
   try {
-    await api.post('/api/user/adminlogin', {
+    await apiClient.post('/api/user/adminlogin', {
       email,
       Password: "verification_Dummy_pass"
     });
@@ -38,17 +38,16 @@ export const checkAdminEmail = asyncHandler(async (email) => {
     const status = error.response?.status;
 
     if (status === 402) {
-      // User exists, but NOT Admin
-      throw new Error("Access Denied: This email belongs to a non-admin account.");
+      // User exists, but not Admin
+      throw new Error("Invalid email.");
     }
 
     if (status === 404) {
       // "User not found"
-      throw new Error("No admin account found with this email.");
+      throw new Error("Invalid email.");
     }
 
     if (status === 400) {
-      // "Email or password incorrect" -> User Exists AND IS Admin
       return { isAdmin: true, exists: true };
     }
 
@@ -59,21 +58,21 @@ export const checkAdminEmail = asyncHandler(async (email) => {
 // SEND OTP 
 export const sendAdminPasswordOtp = asyncHandler(async (email) => {
 
-  const res = await api.post('/api/user/passwordresetotp', { Email: email });
+  const res = await apiClient.post(`/api/user/password-reset-otp/${email}`);
   return res.data;
 });
 
 // VERIFY OTP
 export const verifyAdminPasswordOtp = asyncHandler(async (email, otp) => {
 
-  const res = await api.post('/api/user/verifypasswordotp', { email, otp });
+  const res = await apiClient.post('/api/user/verify-password-otp', { email, otp });
   return res.data;
 });
 
 // RESET PASSWORD
 export const resetAdminPassword = asyncHandler(async (email, newPassword) => {
 
-  const res = await api.post('/api/user/resetpassword', {
+  const res = await apiClient.post('/api/user/reset-password', {
     Email: email,
     newPassword
   });
