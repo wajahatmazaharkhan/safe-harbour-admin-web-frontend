@@ -50,7 +50,7 @@ const SignInComponent = () => {
 
 		const { status, data } = response;
 
-		// ✅ SUCCESS
+		// SUCCESS
 		if (status === 200) {
 			toast.success("Login successful");
 			console.log("User:", data.user);
@@ -58,7 +58,7 @@ const SignInComponent = () => {
 			return;
 		}
 
-		// ❌ ERROR HANDLING — EXACTLY MATCHES BACKEND
+		// ERROR HANDLING — EXACTLY MATCHES BACKEND
 		switch (status) {
 			case 400:
 				toast.error(data.msg); // invalid password

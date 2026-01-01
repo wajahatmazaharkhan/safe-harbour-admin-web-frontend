@@ -78,3 +78,4 @@ export const resetAdminPassword = asyncHandler(async (email, newPassword) => {
   });
   return res.data;
 });
+
