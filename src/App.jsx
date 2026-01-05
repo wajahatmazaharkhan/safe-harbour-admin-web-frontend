@@ -16,6 +16,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { useThemeStore } from "./store/theme-store";
+import Page404 from "./page";
 
 function App() {
   const dark = useThemeStore((state) => state.darkMode);
@@ -40,6 +41,13 @@ function App() {
               <Route path="/" element={<Dashboard />} />
               <Route path="/admin/users" element={<Users />} />
               <Route path="/admin/counsellors" element={<Counsellors />} />
+              <Route path="/LandingPage" element={<LandingPage />} />
+              <Route path="/User-Counsellor" element={<User-Counsellor />} />
+              <Route path="/ServiceList" element={<ServiceList />} />
+              <Route path="/Settings/User" element={<Settings />} />
+              <Route path="/Chat-Voice-Video-Sessions" element={<Chat-Voice-Video-Sessions />} />
+              
+              <Route path='/*' element={<Page404 />} />
             </Route>
           </Routes>
         </div>
