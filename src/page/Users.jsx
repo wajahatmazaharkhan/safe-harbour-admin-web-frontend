@@ -1,225 +1,273 @@
-import * as React from "react";
-import {
-  Box,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Stack,
-  Chip,
-  CircularProgress,
-  Typography,
-} from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+import Paper from "@mui/material/Paper";
+import { useEffect, useMemo, useState } from "react";
 import { getAllUsers } from "../services/user-service";
+import useTitle from "../hooks/useTitle";
+import { Eye, Pencil, Trash2, Plus, Download } from "lucide-react";
+import { PageNavigatorStatus } from "../components";
+import dayjs from "dayjs";
 
-/* =======================
-   TABLE CONFIG
-======================= */
-const columns = [
-  { id: "fullname", label: "Full Name", minWidth: 180 },
-  { id: "email", label: "Email", minWidth: 220 },
-  { id: "role", label: "Role", minWidth: 120 },
-  { id: "gender", label: "Gender", minWidth: 120 },
-  { id: "phone_number", label: "Phone", minWidth: 150 },
-  { id: "authType", label: "Auth Type", minWidth: 160 },
-  { id: "status", label: "Status", minWidth: 120 },
-  { id: "actions", label: "Actions", minWidth: 120 },
-];
+const Users = () => {
+  let title = "User management";
+  useTitle(title);
 
-export default function Users() {
-  const [rows, setRows] = React.useState([]);
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(10);
-  const [loading, setLoading] = React.useState(false);
+  const userTabs = ["User Role", "Username", "Activity Log"];
+  const [current, setCurrent] = useState(userTabs[1]);
 
-  const [openEdit, setOpenEdit] = React.useState(false);
-  const [selectedUser, setSelectedUser] = React.useState(null);
+  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState([]);
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [rowCount, setRowCount] = useState(0);
 
-  /* =======================
-     API
-  ======================= */
+  // NEW STATES (SAFE ADDITIONS)
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedUser, setSelectedUser] = useState(null);
+
+  useEffect(() => {
+    fetchUsers();
+  }, [page, pageSize]);
+
   const fetchUsers = async () => {
-    setLoading(true);
     try {
+      setLoading(true);
       const res = await getAllUsers();
-      setRows(res?.data?.data || []);
+      const apiUsers = res?.data?.data?.users ?? [];
+      const pagination = res?.data?.data?.pagination;
+
+      setUsers(apiUsers);
+      setRowCount(pagination?.totalUsers ?? 0);
     } catch (err) {
-      console.error("Failed to fetch users", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const updateUser = async (id, payload) => {
-    // TODO: Replace with PATCH API
-    setRows((prev) =>
-      prev.map((u) => (u._id === id ? { ...u, ...payload } : u))
-    );
+  // SEARCH + FILTER
+  const filteredUsers = useMemo(() => {
+    return users?.filter((u) => {
+      const matchesSearch =
+        u?.fullname?.toLowerCase()?.includes(search.toLowerCase()) ||
+        u?.email?.toLowerCase()?.includes(search.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "all" || u?.status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [users, search, statusFilter]);
+
+  // COLUMNS PER TAB
+  const columns = useMemo(() => {
+    if (current === "User Role") {
+      return [
+        { field: "role", headerName: "Role", flex: 1 },
+        { field: "fullname", headerName: "Full Name", flex: 1.5 },
+      ];
+    }
+
+    if (current === "Activity Log") {
+      return [
+        { field: "fullname", headerName: "Full Name", flex: 1.5 },
+        {
+          field: "status",
+          headerName: "Status",
+          flex: 1,
+          renderCell: (p) => (
+            <span
+              className={`capitalize font-medium ${
+                p?.value === "active" ? "text-green-600" : "text-red-600"
+              }`}
+            >
+              {p?.value ?? "-"}
+            </span>
+          ),
+        },
+        {
+          field: "last_login",
+          headerName: "Last Login",
+          flex: 1.5,
+          renderCell: (p) =>
+            p?.value ? dayjs(p.value).format("DD MMM YYYY HH:mm") : "—",
+        },
+      ];
+    }
+
+    return [
+      { field: "role", headerName: "Role", flex: 1 },
+      { field: "fullname", headerName: "Full Name", flex: 1.5 },
+      { field: "email", headerName: "Email", flex: 2 },
+      { field: "phone_number", headerName: "Phone Number", flex: 1.3 },
+      {
+        field: "createdAt",
+        headerName: "Date Created",
+        flex: 1.5,
+        renderCell: (p) =>
+          p?.value ? dayjs(p.value).format("DD MMM YYYY HH:mm") : "—",
+      },
+      {
+        field: "status",
+        headerName: "Status",
+        flex: 1,
+        renderCell: (p) => (
+          <span
+            className={`capitalize font-medium ${
+              p?.value === "active" ? "text-green-600" : "text-red-600"
+            }`}
+          >
+            {p?.value ?? "-"}
+          </span>
+        ),
+      },
+      {
+        field: "actions",
+        headerName: "",
+        width: 120,
+        renderCell: (p) => (
+          <div className="flex gap-3">
+            <Eye
+              className="h-4 w-4 cursor-pointer"
+              onClick={() => setSelectedUser(p?.row)}
+            />
+            <Pencil className="h-4 w-4 cursor-pointer" />
+            <Trash2 className="h-4 w-4 cursor-pointer" />
+          </div>
+        ),
+      },
+    ];
+  }, [current]);
+
+  const rows = filteredUsers?.map((u) => ({
+    id: u?._id,
+    ...u,
+  }));
+
+  // EXPORT
+  const exportCSV = () => {
+    const csv =
+      "Name,Email,Role,Status\n" +
+      filteredUsers
+        ?.map((u) => `${u?.fullname},${u?.email},${u?.role},${u?.status}`)
+        .join("\n");
+
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users.csv";
+    a.click();
   };
 
-  React.useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const getAuthType = (user) =>
-    !user?.Password ? (
-      <Chip label="Google" size="small" color="info" />
-    ) : (
-      <Chip label="Email/Password" size="small" />
-    );
-
-  /* =======================
-     RENDER
-  ======================= */
   return (
-    <Box sx={{ minHeight: "100vh", p: 2 }}>
-      <Paper
-        sx={{
-          height: "100%",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        <Typography variant="h6" sx={{ p: 2 }}>
-          Users Management
-        </Typography>
+    <div className="p-5">
+      <PageNavigatorStatus title={title} />
 
-        <TableContainer sx={{ flex: 1 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                {columns.map((col) => (
-                  <TableCell key={col.id} sx={{ fontWeight: 600 }}>
-                    {col.label}
-                  </TableCell>
-                ))}
-              </TableRow>
-            </TableHead>
+      {/* Tabs */}
+      <div className="mt-6 flex gap-8 border-b">
+        {userTabs.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setCurrent(tab)}
+            className={`pb-3 text-sm font-medium ${
+              current === tab
+                ? "border-b-2 border-blue-600 text-blue-600"
+                : "text-gray-500"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
 
-            <TableBody>
-              {loading && (
-                <TableRow>
-                  <TableCell colSpan={columns.length} align="center">
-                    <CircularProgress />
-                  </TableCell>
-                </TableRow>
-              )}
+      {/* Filters */}
+      <div className="mt-5 flex items-center justify-between">
+        <div className="flex gap-3">
+          <input
+            placeholder="Search Username"
+            className="border rounded px-3 py-2 text-sm"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
 
-              {!loading && rows.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={columns.length} align="center">
-                    No users found
-                  </TableCell>
-                </TableRow>
-              )}
+          <select
+            className="border rounded px-3 py-2 text-sm"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
 
-              {!loading &&
-                rows
-                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                  .map((row) => (
-                    <TableRow hover key={row._id}>
-                      {columns.map((col) => {
-                        if (col.id === "actions") {
-                          return (
-                            <TableCell key={col.id}>
-                              <Button
-                                size="small"
-                                variant="outlined"
-                                onClick={() => {
-                                  setSelectedUser({ ...row });
-                                  setOpenEdit(true);
-                                }}
-                              >
-                                Edit
-                              </Button>
-                            </TableCell>
-                          );
-                        }
+        <div className="flex gap-3">
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-2 border px-3 py-2 rounded text-sm cursor-pointer"
+          >
+            <Download size={16} /> Export
+          </button>
+          <button className="flex items-center gap-2 bg-blue-600 text-white px-3 py-2 rounded text-sm cursor-pointer">
+            <Plus size={16} /> Add User
+          </button>
+        </div>
+      </div>
 
-                        if (col.id === "authType") {
-                          return (
-                            <TableCell key={col.id}>
-                              {getAuthType(row)}
-                            </TableCell>
-                          );
-                        }
-
-                        return (
-                          <TableCell key={col.id}>
-                            {row[col.id] ?? "-"}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-
-        <TablePagination
-          component="div"
-          rowsPerPageOptions={[10, 25, 50]}
-          count={rows.length}
-          rowsPerPage={rowsPerPage}
+      {/* Table */}
+      <Paper className="mt-6">
+        <DataGrid
+          autoHeight
+          rows={rows}
+          columns={columns}
+          loading={loading}
           page={page}
-          onPageChange={(_, newPage) => setPage(newPage)}
-          onRowsPerPageChange={(e) => {
-            setRowsPerPage(+e.target.value);
-            setPage(0);
-          }}
+          pageSize={pageSize}
+          rowCount={rowCount}
+          paginationMode="server"
+          checkboxSelection
+          onPageChange={(p) => setPage(p)}
+          onPageSizeChange={(s) => setPageSize(s)}
         />
       </Paper>
 
-      {/* EDIT MODAL */}
-      <Dialog open={openEdit} onClose={() => setOpenEdit(false)} fullWidth>
-        <DialogTitle>Edit User</DialogTitle>
-
-        {selectedUser && (
-          <DialogContent dividers>
-            <Stack spacing={2}>
-              {["fullname", "email", "phone_number", "role", "status"].map(
-                (field) => (
-                  <TextField
-                    key={field}
-                    label={field.replace("_", " ").toUpperCase()}
-                    value={selectedUser[field] || ""}
-                    onChange={(e) =>
-                      setSelectedUser({
-                        ...selectedUser,
-                        [field]: e.target.value,
-                      })
-                    }
-                    fullWidth
-                  />
-                )
-              )}
-            </Stack>
-          </DialogContent>
-        )}
-
-        <DialogActions>
-          <Button onClick={() => setOpenEdit(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={async () => {
-              await updateUser(selectedUser._id, selectedUser);
-              setOpenEdit(false);
-            }}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+      {/* MODAL */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded w-[500px]">
+            <h2 className="font-semibold text-lg mb-4">User Details</h2>
+            <div className="space-y-2 text-sm">
+              <p>
+                <b>Name:</b> {selectedUser?.fullname}
+              </p>
+              <p>
+                <b>Email:</b> {selectedUser?.email}
+              </p>
+              <p>
+                <b>Phone:</b> {selectedUser?.phone_number}
+              </p>
+              <p>
+                <b>Role:</b> {selectedUser?.role}
+              </p>
+              <p>
+                <b>Status:</b> {selectedUser?.status}
+              </p>
+              <p>
+                <b>Verified:</b> {selectedUser?.isVerified ? "Yes" : "No"}
+              </p>
+            </div>
+            <button
+              className="mt-4 bg-blue-600 text-white px-4 py-2 rounded"
+              onClick={() => setSelectedUser(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
-}
+};
+
+export default Users;

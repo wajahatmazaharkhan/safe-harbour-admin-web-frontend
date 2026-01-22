@@ -1,5 +1,14 @@
+import { PageNavigatorStatus } from "../components";
+import useTitle from "../hooks/useTitle";
+
 const Dashboard = () => {
-  return <div></div>;
+  let title = "Dashboard";
+  useTitle(title);
+  return (
+    <div>
+      <PageNavigatorStatus title={title} />
+    </div>
+  );
 };
 
 export default Dashboard;
