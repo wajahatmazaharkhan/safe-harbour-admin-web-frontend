@@ -37,6 +37,14 @@ export default function AdminDrawer() {
       role="presentation"
     >
       <Box sx={{ flexGrow: 1 }}>
+        <div className="flex justify-center place-content-center items-center">
+          <img
+            className="py-2"
+            src="https://i.postimg.cc/HLSQ5WKF/Logo.png"
+            alt=""
+          />
+          <h1 className="mt-1 mx-3 font-bold">Safe Harbour Admin</h1>
+        </div>
         {adminMenu.map((group, idx) => (
           <Box key={group.section}>
             <Box sx={{ px: 2, py: 1 }}>

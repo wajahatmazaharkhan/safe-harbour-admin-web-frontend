@@ -11,8 +11,8 @@ export const adminMenu = [
     section: "User Management",
     icon: <PeopleIcon />,
     items: [
-      { label: "All Users", route: "/admin/users" },
-      { label: "User Info", route: "/admin/users/info" },
+      { label: "All Users", route: "/user-management" },
+      // { label: "User Info", route: "/admin/users/info" },
     ],
   },
   {

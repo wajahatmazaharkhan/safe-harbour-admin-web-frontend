@@ -11,7 +11,7 @@ import {
   Counsellors,
 } from "./page";
 import { ToastContainer } from "react-toastify";
-import { AdminDrawer } from "./components/index";
+import { AdminDrawer, PageNavigatorStatus } from "./components/index";
 import "react-toastify/dist/ReactToastify.css";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -28,7 +28,7 @@ function App() {
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <Router>
-        <div>
+        <div className="">
           <AdminDrawer />
           <ToastContainer position="top-right" autoClose={3000} />
           <Routes>
@@ -38,7 +38,7 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route element={<PrivateRoutes />}>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/admin/users" element={<Users />} />
+              <Route path="/user-management" element={<Users />} />
               <Route path="/admin/counsellors" element={<Counsellors />} />
             </Route>
           </Routes>
