@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 import {
-	Avatar,
-	Box,
-	Button,
-	Container,
-	CssBaseline,
-	TextField,
-	Typography,
-	Paper,
-	InputAdornment,
-	IconButton,
+  Avatar,
+  Box,
+  Button,
+  Container,
+  CssBaseline,
+  TextField,
+  Typography,
+  Paper,
+  InputAdornment,
+  IconButton,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Visibility from "@mui/icons-material/Visibility";
@@ -20,202 +20,194 @@ import { useAuthStore } from "../store/auth-store";
 import { Link, useNavigate } from "react-router-dom";
 
 const SignInComponent = () => {
-	const [form, setForm] = useState({
-		email: "",
-		password: "",
-	});
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
-	useEffect(() => {
-		console.log("COMPONENT MOUNTED");
-	}, []);
-	const navigate = useNavigate();
-	const [showPassword, setShowPassword] = useState(false);
-	const [loading, setLoading] = useState(false);
-	const isAuthenticated = useAuthStore((state) => state.authenticated);
-	const changeAuthState = useAuthStore((state) => state.toggleAuthState);
+  useEffect(() => {
+    console.log("COMPONENT MOUNTED");
+  }, []);
+  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const isAuthenticated = useAuthStore((state) => state.authenticated);
+  const changeAuthState = useAuthStore((state) => state.toggleAuthState);
 
-	console.log(isAuthenticated);
+  console.log(isAuthenticated);
 
-	const handleChange = (e) => {
-		setForm({ ...form, [e.target.name]: e.target.value });
-	};
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
-	const handleSubmit = async (e) => {
-		e.preventDefault();
-		setLoading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-		const response = await login(form.email, form.password);
+    const response = await login(form.email, form.password);
 
-		setLoading(false);
+    setLoading(false);
+    console.log(response);
+    const { status, data } = response;
 
-		const { status, data } = response;
+    // SUCCESS
+    if (status === 200) {
+      toast.success("Login successful");
+      console.log("User:", data.data?.user?.fullname);
+      changeAuthState(true);
 
-		// SUCCESS
-		if (status === 200) {
-			toast.success("Login successful");
-			console.log("User:", data.user);
-			changeAuthState(true);
-			return;
-		}
+      // store token if needed
+      localStorage.setItem("token", data.data.token);
 
-		// ERROR HANDLING — EXACTLY MATCHES BACKEND
-		switch (status) {
-			case 400:
-				toast.error(data.msg); // invalid password
-				break;
+      return;
+    }
 
-			case 402:
-				toast.warning(data.msg); // not admin
-				break;
+    // ERROR HANDLING — EXACTLY MATCHES BACKEND
+    switch (status) {
+      case 400:
+        toast.error(data.message); // invalid password
+        break;
 
-			case 404:
-				toast.error(data.msg); // user not found
-				break;
+      case 402:
+        toast.warning(data.message); // not admin
+        break;
 
-			case 0:
-				toast.error("Server not responding");
-				break;
+      case 404:
+        toast.error(data.message); // user not found
+        break;
 
-			default:
-				toast.error("Something went wrong");
-		}
-	};
+      case 0:
+        toast.error("Server not responding");
+        break;
 
-	useEffect(() => {
-		if (isAuthenticated) {
-			navigate("/");
-		}
-	}, [isAuthenticated, navigate]);
+      default:
+        toast.error("Something went wrong");
+    }
+  };
 
-	return (
-		<>
-			<Container
-				component="main"
-				maxWidth="sm"
-				sx={{
-					minHeight: "100vh",
-					display: "flex",
-					alignItems: "center",
-				}}
-			>
-				<CssBaseline />
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
 
-				<Paper
-					elevation={6}
-					sx={{
-						width: "100%",
-						p: 4,
-						borderRadius: 3,
-					}}
-				>
-					<Box
-						sx={{
-							display: "flex",
-							flexDirection: "column",
-							alignItems: "center",
-						}}
-					>
-						<Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
-							<LockOutlinedIcon />
-						</Avatar>
+  return (
+    <>
+      <Container
+        component="main"
+        maxWidth="sm"
+        sx={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+        }}
+      >
+        <CssBaseline />
 
-						<Typography
-							sx={{ textTransform: "uppercase" }}
-							component="h1"
-							variant="h5"
-							fontWeight="bold"
-						>
-							Safe Harbour Login
-						</Typography>
+        <Paper
+          elevation={6}
+          sx={{
+            width: "100%",
+            p: 4,
+            borderRadius: 3,
+          }}
+        >
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Avatar sx={{ m: 1, bgcolor: "primary.main" }}>
+              <LockOutlinedIcon />
+            </Avatar>
 
-						<Box
-							component="form"
-							onSubmit={handleSubmit}
-							sx={{ mt: 3 }}
-						>
-							<TextField
-								fullWidth
-								required
-								label="Email Address"
-								name="email"
-								type="email"
-								margin="normal"
-								value={form.email}
-								onChange={handleChange}
-							/>
+            <Typography
+              sx={{ textTransform: "uppercase" }}
+              component="h1"
+              variant="h5"
+              fontWeight="bold"
+            >
+              Safe Harbour Login
+            </Typography>
 
-							<TextField
-								fullWidth
-								required
-								label="Password"
-								name="password"
-								type={showPassword ? "text" : "password"}
-								margin="normal"
-								value={form.password}
-								onChange={handleChange}
-								InputProps={{
-									endAdornment: (
-										<InputAdornment position="end">
-											<IconButton
-												onClick={() =>
-													setShowPassword(
-														!showPassword
-													)
-												}
-												edge="end"
-											>
-												{showPassword ? (
-													<VisibilityOff />
-												) : (
-													<Visibility />
-												)}
-											</IconButton>
-										</InputAdornment>
-									),
-								}}
-							/>
-							<Link
-								to="/forgot"
-								style={{
-									textDecoration: "none",
-									fontSize: "0.8rem",
-									color: "#1976d2",
-									fontWeight: 500,
-								}}
-								disabled={loading}
-							>
-								Forgot Password?
-							</Link>
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+              <TextField
+                fullWidth
+                required
+                label="Email Address"
+                name="email"
+                type="email"
+                margin="normal"
+                value={form.email}
+                onChange={handleChange}
+              />
 
-							<Button
-								type="submit"
-								fullWidth
-								variant="contained"
-								size="large"
-								disabled={loading}
-								sx={{
-									mt: 3,
-									py: 1.2,
-									fontWeight: "bold",
-								}}
-							>
-								{loading ? "Signing In..." : "Sign In"}
-							</Button>
+              <TextField
+                fullWidth
+                required
+                label="Password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                margin="normal"
+                value={form.password}
+                onChange={handleChange}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
+              />
+              <Link
+                to="/forgot"
+                style={{
+                  textDecoration: "none",
+                  fontSize: "0.8rem",
+                  color: "#1976d2",
+                  fontWeight: 500,
+                }}
+                disabled={loading}
+              >
+                Forgot Password?
+              </Link>
 
-							<Typography
-								variant="body2"
-								color="text.secondary"
-								align="center"
-								sx={{ mt: 3 }}
-							>
-								Authorized Admins Only
-							</Typography>
-						</Box>
-					</Box>
-				</Paper>
-			</Container>
-		</>
-	);
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                size="large"
+                disabled={loading}
+                sx={{
+                  mt: 3,
+                  py: 1.2,
+                  fontWeight: "bold",
+                }}
+              >
+                {loading ? "Signing In..." : "Sign In"}
+              </Button>
+
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                align="center"
+                sx={{ mt: 3 }}
+              >
+                Authorized Admins Only
+              </Typography>
+            </Box>
+          </Box>
+        </Paper>
+      </Container>
+    </>
+  );
 };
 
 export default SignInComponent;
