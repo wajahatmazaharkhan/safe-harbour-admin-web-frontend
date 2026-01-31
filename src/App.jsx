@@ -11,14 +11,16 @@ import {
   Counsellors,
 } from "./page";
 import { ToastContainer } from "react-toastify";
-import { AdminDrawer, PageNavigatorStatus } from "./components/index";
+import { AdminDrawer, Logout, PageNavigatorStatus } from "./components/index";
 import "react-toastify/dist/ReactToastify.css";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import { useThemeStore } from "./store/theme-store";
+import { useAuthStore } from "./store/auth-store";
 
 function App() {
   const dark = useThemeStore((state) => state.darkMode);
+  const isAuthenticated = useAuthStore((state) => state.authenticated);
   const darkTheme = createTheme({
     palette: {
       mode: `${dark ? "dark" : "light"}`,
@@ -29,13 +31,16 @@ function App() {
       <CssBaseline />
       <Router>
         <div className="">
-          <AdminDrawer />
+          {isAuthenticated && <AdminDrawer />}
           <ToastContainer position="top-right" autoClose={3000} />
           <Routes>
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/forgot" element={<ForgotPassword />} />
             <Route path="/verify-otp/:emailId" element={<ResetPasswordOTP />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+
+            <Route path="/logout" element={<Logout />} />
+
             <Route element={<PrivateRoutes />}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/user-management" element={<Users />} />
